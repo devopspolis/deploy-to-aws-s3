@@ -14,7 +14,7 @@ This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a
 | `delete`            | Whether to delete files in S3 not found in the local directory              | ❌       | `true`                           |
 | `ref`               | Git branch, tag, or SHA to checkout                                         | ❌       | `${{ github.ref_name }}`        |
 | `script`            | Optional script command to run before uploading (e.g., `build.sh --prod`)   | ❌       | `""`                             |
-| `working-directory` | Directory to run the script in                                               | ❌       | `.`                              |
+| `working-directory` | Directory in which to run the script                                        | ❌       | `.`                              |
 | `tags`              | Comma-separated `key=value` pairs to tag the bucket                         | ❌       | `""`                             |
 
 ---
