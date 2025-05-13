@@ -1,33 +1,86 @@
-# 🚀 Deploy directory to AWS S3
+<div style="display: flex; align-items: center;">
+  <img src="logo.png" alt="Logo" width="50" height="50" style="margin-right: 10px;"/>
+  <span style="font-size: 2.2em;">Deploy to AWS S3</span>
+</div>
 
-This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a script to build or prepare the directory before uploading, and supports tagging the destination bucket.
+<p>
+
+This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a script to create or prepare the directory before uploading, and supports tagging the destination bucket.
+
+</p>
 
 ---
 
+## 📚 Table of Contents
+
+- [📥 Inputs](#inputs)
+- [📤 Outputs](#outputs)
+- [📦 Usage](#usage)
+- [🚦 Requirements](#requirements)
+
+---
+<!-- trunk-ignore(markdownlint/MD033) -->
+<a id="inputs"></a>
 ## 📥 Inputs
 
-| Name                | Description                                                                 | Required | Default                          |
-|---------------------|-----------------------------------------------------------------------------|-------|----------------------------------|
-| `directory`         | Path to the local directory to upload to S3                                 | true  | —                                |
-| `bucket`            | Name of the S3 bucket to upload to                                          | true  | —                                |
-| `bucket_region`     | AWS region where the S3 bucket resides                                      | true  | —                                |
-| `delete`            | Whether to delete files in S3 not found in the local directory              | false | `true`                           |
-| `ref`               | Git branch, tag, or SHA to checkout                                         | false | `default branch`        |
-| `script`            | Optional script command to run before uploading (e.g., `build.sh --prod`)   | false | `""`                             |
-| `working-directory` | Directory in which to run the script                                        | false | `.`                              |
-| `tags`              | Comma-separated `key=value` pairs to tag the bucket                         | false | `""`                             |
+| Name                | Description                                              | Required | Default          |
+| ------------------- | -------------------------------------------------------- | -------- | ---------------- |
+| `directory`         | The directory (source)                                   | true     | —                |
+| `bucket`            | The S3 bucket (destination)                              | true     | —                |
+| `bucket_region`     | S3 bucket region                                         | true     | —                |
+| `delete`            | Delete files in destination not found in the source      | false    | `true`           |
+| `ref`               | Git branch, tag, or SHA to checkout                      | false    | `default branch` |
+| `script`            | Script to run before uploading (e.g., `build.sh --prod`) | false    | none             |
+| `working-directory` | Directory from which to run the script                   | false    | `.`              |
+| `tags`              | bucket tags (e.g. version=v1.2.0,environment=dev)        | false    | none             |
 
 ---
-
+<!-- trunk-ignore(markdownlint/MD033) -->
+<a id="outputs"></a>
 ## 📤 Outputs
 
 | Name         | Description                       |
-|--------------|-----------------------------------|
+| ------------ | --------------------------------- |
 | `bucket_arn` | The ARN of the deployed S3 bucket |
 
 ---
-
+<!-- trunk-ignore(markdownlint/MD033) -->
+<a id="usage"></a>
 ## 📦 Usage
+
+Example 1 - Uploads existing repository directory `docs` to S3 bucket `my-bucket-name`
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy directory to AWS S3
+        uses: devopspolis/deploy-to-aws-s3@main
+        with:
+          directory: docs
+          bucket: my-bucket-name
+          bucket_region: us-west-2
+```
+
+Example 2 - Runs `build.sh` script to create and upload `reports` directory. Adds bucket tags.
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy directory to AWS S3
+        uses: devopspolis/deploy-to-aws-s3@main
+        with:
+          directory: reports
+          bucket: my-app-bucket
+          bucket_region: us-west-2
+          script: build.sh
+          tags: version=1.2.3,environment=production
+```
+
+Example 3 - Runs `build.sh` script located in `scripts` directory with argument `--prod` to create and upload `dist` directory.
 
 ```yaml
 jobs:
@@ -41,4 +94,31 @@ jobs:
           bucket: my-app-bucket
           bucket_region: us-west-2
           script: build.sh --prod
-          tags: Version=1.2.3,Environment=production
+          working-directory: scripts
+```
+---
+<!-- trunk-ignore(markdownlint/MD033) -->
+<a id="requirements"></a>
+## 🚦Requirements
+
+1. The calling workflow must have the permissions shown below.
+1. The calling workflow must provide access and permission to upload to the AWS S3 bucket. Best practice is to set up OIDC authentication between the GitHub repository and AWS account, and then assume a role with the necessary permissions to access and putObject to the bucket.
+
+   In the example below the `AWS_ACCOUNT_ID` and `AWS_REGION` are retrieved from the GitHub repository environment variables, enabling the workflow to target environment specific AWS accounts.
+
+```yaml
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/deploy-to-aws-s3-role
+          aws-region: ${{ vars.AWS_REGION }}
+```
