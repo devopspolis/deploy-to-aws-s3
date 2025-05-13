@@ -1,4 +1,4 @@
-# 🚀 Deploy to AWS S3 GitHub Action
+# 🚀 Deploy directory to AWS S3 GitHub Action
 
 This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a script to build or prepare the directory before deployment, and supports tagging the destination bucket.
 
@@ -34,10 +34,8 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to S3
-        uses: devopspolis/deploy-to-aws-s3-action@v1
+      - name: Deploy directory to AWS S3
+        uses: devopspolis/deploy-to-aws-s3@main
         with:
           directory: dist
           bucket: my-app-bucket
