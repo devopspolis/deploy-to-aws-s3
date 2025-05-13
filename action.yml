@@ -1,4 +1,4 @@
-name: 'Deploy to AWS S3'
+name: 'Deploy a directory to AWS S3'
 description: 'Deploys a directory to AWS S3'
 author: 'Rick Meneely <rick@devopspolis.com>'
 branding:
