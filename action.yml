@@ -46,9 +46,6 @@ outputs:
     value: ${{ steps.set-outputs.outputs.bucket_arn }}
 runs:
   using: composite
-  defaults:
-    run:
-      shell: bash
   steps:
     - name: Set delete
       run: |
@@ -57,6 +54,7 @@ runs:
         else
           echo "delete_option=" >> $GITHUB_ENV
         fi
+      shell: bash
 
     - name: Set ref
       run: |
@@ -65,6 +63,7 @@ runs:
         else
           echo "ref=${{ github.ref_name }}" >> $GITHUB_ENV
         fi
+      shell: bash
 
     - name: Checkout repo
       uses: actions/checkout@v4
@@ -90,12 +89,14 @@ runs:
         REF: ${{ env.ref }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         TAGS: ${{ inputs.tags }}
+      shell: bash
 
     - name: Upload to S3
       working-directory: ${{ inputs.working-directory }}
       run: |
         echo "▶️ Syncing '${{ inputs.directory }}' to 's3://${{ inputs.bucket }}'..."
         aws s3 sync ${{ inputs.directory }} s3://${{ inputs.bucket }} ${{ env.delete_option }} --region ${{ inputs.bucket_region }}
+      shell: bash
 
     - name: Add Bucket Tags
       if: ${{ inputs.tags != '' }}
@@ -117,8 +118,10 @@ runs:
 
         echo "Using TagSet: $TAGSET"
         aws s3api put-bucket-tagging --bucket "$bucket_name" --tagging "TagSet=$TAGSET"
+      shell: bash
 
     - name: Output bucket ARN
       id: set-outputs
       run: |
         echo "bucket_arn=arn:aws:s3:::${{ inputs.bucket }}" >> $GITHUB_OUTPUT
+      shell: bash
