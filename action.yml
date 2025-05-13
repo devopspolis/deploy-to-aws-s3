@@ -7,30 +7,28 @@ branding:
 inputs:
   directory:
     description: Directory to upload
+    type: string
     required: true
   bucket:
     description: AWS S3 Bucket name
+    type: string
     required: true
   bucket_region:
     description: AWS S3 Bucket region
     type: string
     required: true
   delete:
-    description: Deletes files which exist in the destination bucket but not in the source directory
+    description: Delete files not in the source directory
     type: boolean
     default: true
   ref:
     description: The git branch, tag or SHA to checkout
+    type: string
     required: false
     default: ''
   script:
-    description: |
-      Full command to run a script to create or prepare the directory before uploading
-      Example: build.sh --prod
-    required: false
-    default: ''
-  script_args:
-    description: Args to pass to script
+    description: Script to run (e.g. build.sh --prod)
+    type: string
     required: false
     default: ''
   working-directory:
@@ -38,9 +36,7 @@ inputs:
     required: false
     default: .
   tags:
-    description: |
-      Comma-separated list of key=value tags to apply to the bucket.
-      Example: Version=v1.2.0,Environment=QA
+    description: bucket tags (e.g. version=v1.2.0,environment=qa)
     type: string
     required: false
     default: ''
@@ -50,6 +46,9 @@ outputs:
     value: ${{ steps.set-outputs.outputs.bucket_arn }}
 runs:
   using: composite
+  defaults:
+    run:
+      shell: bash
   steps:
     - name: Set delete
       run: |
@@ -58,7 +57,6 @@ runs:
         else
           echo "delete_option=" >> $GITHUB_ENV
         fi
-      shell: bash
 
     - name: Set ref
       run: |
@@ -67,7 +65,6 @@ runs:
         else
           echo "ref=${{ github.ref_name }}" >> $GITHUB_ENV
         fi
-      shell: bash
 
     - name: Checkout repo
       uses: actions/checkout@v4
@@ -87,7 +84,6 @@ runs:
           exit 1
         fi
       working-directory: ${{ inputs.working-directory }}
-      shell: bash
       env:
         DIRECTORY: ${{ inputs.working-directory }}
         BUCKET: ${{ inputs.bucket }}
@@ -121,7 +117,6 @@ runs:
 
         echo "Using TagSet: $TAGSET"
         aws s3api put-bucket-tagging --bucket "$bucket_name" --tagging "TagSet=$TAGSET"
-      shell: bash
 
     - name: Output bucket ARN
       id: set-outputs
