@@ -6,11 +6,11 @@ branding:
   color: purple
 inputs:
   directory:
-    description: Directory to upload
+    description: Directory to upload (source)
     type: string
     required: true
   bucket:
-    description: AWS S3 Bucket name
+    description: AWS S3 Bucket name (destination)
     type: string
     required: true
   bucket_region:
@@ -18,7 +18,7 @@ inputs:
     type: string
     required: true
   delete:
-    description: Delete files not in the source directory
+    description: Delete files not in source directory
     type: boolean
     default: true
   ref:
@@ -27,12 +27,12 @@ inputs:
     required: false
     default: ''
   script:
-    description: Script to run (e.g. build.sh --prod)
+    description: Run script (e.g. build.sh --prod)
     type: string
     required: false
     default: ''
   working-directory:
-    description: The directory in which to run the script
+    description: Script directory
     required: false
     default: .
   tags:
