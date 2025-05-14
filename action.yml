@@ -43,7 +43,10 @@ inputs:
 outputs:
   bucket_arn:
     description: The AWS S3 bucket ARN
-    value: ${{ steps.set-outputs.outputs.bucket_arn }}
+    value: ${{ steps.bucket_arn.outputs.bucket_arn }}
+  integrity_hash:
+    description: MD5 hash of directory contents (for integrity verification)
+    value: ${{ steps.hash.outputs.integrity_hash }}
 runs:
   using: composite
   steps:
@@ -121,7 +124,14 @@ runs:
       shell: bash
 
     - name: Output bucket ARN
-      id: set-outputs
+      id: bucket_arn
       run: |
         echo "bucket_arn=arn:aws:s3:::${{ inputs.bucket }}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Generate integrity hash
+      id: hash
+      run: |
+        HASH=$(find "${{ inputs.directory }}" -type f -exec md5sum {} + | sort -k 2 | md5sum | awk '{print $1}')
+        echo "integrity_hash=$HASH" >> $GITHUB_OUTPUT
       shell: bash

@@ -39,9 +39,10 @@ This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a
 <a id="outputs"></a>
 ## 📤 Outputs
 
-| Name         | Description                       |
-| ------------ | --------------------------------- |
-| `bucket_arn` | The ARN of the deployed S3 bucket |
+| Name             | Description                                   |
+| ---------------- | --------------------------------------------- |
+| `bucket_arn`     | The ARN of the deployed S3 bucket             |
+| `integrity_hash` | The MD5 integrity hash of the bucket contents |
 
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->
@@ -117,7 +118,7 @@ jobs:
 
     steps:
       - name: Set up AWS credentials
-        uses: aws-actions/configure-aws-credentials@v3
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/deploy-to-aws-s3-role
           aws-region: ${{ vars.AWS_REGION }}
