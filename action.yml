@@ -44,6 +44,7 @@ inputs:
     type: string
     required: false
     default: ''
+
 outputs:
   bucket_arn:
     description: The AWS S3 bucket ARN
