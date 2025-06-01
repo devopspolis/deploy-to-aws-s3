@@ -4,20 +4,28 @@
 </div>
 
 <p>
-
 This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a script to create or prepare the directory before uploading, and supports tagging the destination bucket.
-
 </p>
+
+![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-Deploy%20to%20AWS%20S3-blue?logo=github)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+See more [GitHub Actions by DevOpspolis](https://github.com/marketplace?query=devopspolis&type=actions)
 
 ---
 
 ## 📚 Table of Contents
-
+- [✨ Features](#features)
 - [📥 Inputs](#inputs)
 - [📤 Outputs](#outputs)
 - [📦 Usage](#usage)
 - [🚦 Requirements](#requirements)
-
+- [🧑‍⚖️ Legal](#legal)
+---
+<!-- trunk-ignore(markdownlint/MD033) -->
+<a id="features"></a>
+## ✨ Features
+- Deploys directory to AWS S3
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->
 <a id="inputs"></a>
@@ -33,6 +41,7 @@ This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a
 | `script`            | Script to run before uploading (e.g., `build.sh --prod`) | false    | none             |
 | `working-directory` | Directory from which to run the script                   | false    | `.`              |
 | `tags`              | bucket tags (e.g. version=v1.2.0,environment=dev)        | false    | none             |
+| `role`                | IAM role ARN or name to assume for deployment                           | false    | —       |
 
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->
@@ -123,3 +132,8 @@ jobs:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/deploy-to-aws-s3-role
           aws-region: ${{ vars.AWS_REGION }}
 ```
+---
+<!-- trunk-ignore(markdownlint/MD033) -->
+<a id="legal"></a>
+## 🧑‍⚖️ Legal
+The MIT License (MIT)
