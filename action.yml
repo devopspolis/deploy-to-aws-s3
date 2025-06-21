@@ -63,8 +63,7 @@ runs:
         role="${{ inputs.role }}"
         if [[ "$role" != arn:aws:iam::* ]]; then
           echo "Resolving short role name to full ARN..."
-          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-          role="arn:aws:iam::$ACCOUNT_ID:role/$role"
+          role="arn:aws:iam::${ACCOUNT_ID}:role/$role"
         fi
         echo "role_arn=$role" >> $GITHUB_OUTPUT
 
