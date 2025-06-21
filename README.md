@@ -71,6 +71,9 @@ jobs:
           directory: docs
           bucket: my-bucket-name
           bucket_region: us-west-2
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
 ```
 
 Example 2 - Runs `build.sh` script to create and upload `reports` directory. Adds bucket tags.
@@ -88,6 +91,9 @@ jobs:
           bucket_region: us-west-2
           script: build.sh
           tags: version=1.2.3,environment=production
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
 ```
 
 Example 3 - Runs `build.sh` script located in `scripts` directory with argument `--prod` to create and upload `dist` directory.
@@ -105,6 +111,9 @@ jobs:
           bucket_region: us-west-2
           script: build.sh --prod
           working-directory: scripts
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
 ```
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->
@@ -130,7 +139,9 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/deploy-to-aws-s3-role
-          aws-region: ${{ vars.AWS_REGION }}
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
 ```
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->
