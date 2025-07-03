@@ -4,7 +4,7 @@
 </div>
 
 <p>
-This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a script to create or prepare the directory before uploading, and supports tagging the destination bucket.
+This GitHub Action uploads a directory to an AWS S3 bucket. It optionally runs a script to build or prepare the directory and supports tagging the destination bucket.
 </p>
 
 ![GitHub Marketplace](https://img.shields.io/badge/GitHub%20Marketplace-Deploy%20to%20AWS%20S3-blue?logo=github)
@@ -37,11 +37,10 @@ See more [GitHub Actions by DevOpspolis](https://github.com/marketplace?query=de
 | `bucket`            | The S3 bucket (destination)                              | true     | —                |
 | `bucket_region`     | S3 bucket region                                         | true     | —                |
 | `delete`            | Delete files in destination not found in the source      | false    | `true`           |
-| `ref`               | Git branch, tag, or SHA to checkout                      | false    | `default branch` |
 | `script`            | Script to run before uploading (e.g., `build.sh --prod`) | false    | none             |
 | `working-directory` | Directory from which to run the script                   | false    | `.`              |
 | `tags`              | bucket tags (e.g. version=v1.2.0,environment=dev)        | false    | none             |
-| `role`                | IAM role ARN or name to assume for deployment                           | false    | —       |
+| `role`              | IAM role ARN or name to assume for deployment            | false    | —                |
 
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->
@@ -58,13 +57,23 @@ See more [GitHub Actions by DevOpspolis](https://github.com/marketplace?query=de
 <a id="usage"></a>
 ## 📦 Usage
 
+### Syntax
+```yaml
+uses: devopspolis/deploy-to-aws-s3@<version>
+with:
+  [inputs]
+```
+
 Example 1 - Uploads existing repository directory `docs` to S3 bucket `my-bucket-name`
+
+Note: Files in the destination S3 bucket not found in the source directory will be deleted by default. Set `delete: false` to disable.
 
 ```yaml
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Deploy directory to AWS S3
         uses: devopspolis/deploy-to-aws-s3@main
         with:
@@ -83,6 +92,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Deploy directory to AWS S3
         uses: devopspolis/deploy-to-aws-s3@main
         with:
@@ -103,13 +113,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Deploy directory to AWS S3
         uses: devopspolis/deploy-to-aws-s3@main
         with:
           directory: dist
           bucket: my-app-bucket
           bucket_region: us-west-2
-          script: build.sh --prod
+          script: "build.sh --prod"
           working-directory: scripts
         env:
           AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}

@@ -4,6 +4,7 @@ author: 'Rick Meneely <rick@devopspolis.com>'
 branding:
   icon: upload-cloud
   color: purple
+
 inputs:
   directory:
     description: Directory to upload (source)
@@ -21,11 +22,6 @@ inputs:
     description: Delete files not in source directory
     type: boolean
     default: true
-  ref:
-    description: The git branch, tag or SHA to checkout
-    type: string
-    required: false
-    default: ''
   script:
     description: Run script (e.g. build.sh --prod)
     type: string
@@ -52,6 +48,7 @@ outputs:
   integrity_hash:
     description: MD5 hash of directory contents (for integrity verification)
     value: ${{ steps.hash.outputs.integrity_hash }}
+
 runs:
   using: composite
   steps:
@@ -63,7 +60,6 @@ runs:
         role="${{ inputs.role }}"
         if [[ "$role" != arn:aws:iam::* ]]; then
           echo "Resolving short role name to full ARN..."
-          # For OIDC, we need the AWS_ACCOUNT_ID to be available
           if [[ -z "$AWS_ACCOUNT_ID" ]]; then
             echo "❌ AWS_ACCOUNT_ID environment variable is required when using short role names"
             exit 1
@@ -90,19 +86,13 @@ runs:
         fi
       shell: bash
 
-    - name: Set ref
+    - name: Validate input directory
       run: |
-        if [ -n "${{ inputs.ref }}" ]; then
-          echo "ref=${{ inputs.ref }}" >> $GITHUB_ENV
-        else
-          echo "ref=${{ github.ref_name }}" >> $GITHUB_ENV
+        if [ ! -d "${{ inputs.directory }}" ]; then
+          echo "❌ Directory '${{ inputs.directory }}' does not exist"
+          exit 1
         fi
       shell: bash
-
-    - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ env.ref }}
 
     - name: Run build script (if specified)
       if: ${{ inputs.script != '' }}
@@ -120,7 +110,6 @@ runs:
       env:
         DIRECTORY: ${{ inputs.working-directory }}
         BUCKET: ${{ inputs.bucket }}
-        REF: ${{ env.ref }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         TAGS: ${{ inputs.tags }}
       shell: bash
@@ -138,7 +127,6 @@ runs:
         bucket_name=$(echo "${{ inputs.bucket }}" | cut -d'/' -f1)
         echo "Tagging S3 bucket: $bucket_name"
 
-        # Convert key=value,key2=value2 to JSON TagSet format
         IFS=',' read -ra PAIRS <<< "${{ inputs.tags }}"
         TAGSET=""
         for pair in "${PAIRS[@]}"; do
@@ -147,7 +135,6 @@ runs:
           TAGSET="${TAGSET}{Key=${KEY},Value=${VALUE}},"
         done
 
-        # Remove trailing comma
         TAGSET="[${TAGSET%,}]"
 
         echo "Using TagSet: $TAGSET"
