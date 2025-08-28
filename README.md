@@ -25,7 +25,7 @@ See more [GitHub Actions by DevOpspolis](https://github.com/marketplace?query=de
 <!-- trunk-ignore(markdownlint/MD033) -->
 <a id="features"></a>
 ## ✨ Features
-- Deploys directory to AWS S3
+- Deploys files or directories to AWS S3
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->
 <a id="inputs"></a>
@@ -33,9 +33,9 @@ See more [GitHub Actions by DevOpspolis](https://github.com/marketplace?query=de
 
 | Name                | Description                                              | Required | Default          |
 | ------------------- | -------------------------------------------------------- | -------- | ---------------- |
-| `directory`         | The directory (source)                                   | true     | —                |
-| `bucket`            | The S3 bucket (destination)                              | true     | —                |
-| `bucket_region`     | S3 bucket region                                         | true     | —                |
+| `source`            | The file or directory (source)                           | true     | —                |
+| `destination`       | S3 bucket name or bucket/prefix path (destination)       | true     | —                |
+| `aws_region`        | AWS region                                               | false    | Uses AWS_REGION, AWS_DEFAULT_REGION, or us-east-1 |
 | `delete`            | Delete files in destination not found in the source      | false    | `true`           |
 | `script`            | Script to run before uploading (e.g., `build.sh --prod`) | false    | none             |
 | `working-directory` | Directory from which to run the script                   | false    | `.`              |
@@ -66,7 +66,9 @@ with:
 
 Example 1 - Uploads existing repository directory `docs` to S3 bucket `my-bucket-name`
 
-Note: Files in the destination S3 bucket not found in the source directory will be deleted by default. Set `delete: false` to disable.
+Note: When uploading directories, files in the destination S3 bucket not found in the source directory will be deleted by default. Set `delete: false` to disable. The delete option is ignored when uploading single files.
+
+**Region Resolution**: The action resolves AWS region in this order: 1) `aws_region` input, 2) `AWS_REGION` environment variable, 3) `AWS_DEFAULT_REGION` environment variable, 4) defaults to `us-east-1`.
 
 ```yaml
 jobs:
@@ -77,15 +79,14 @@ jobs:
       - name: Deploy directory to AWS S3
         uses: devopspolis/deploy-to-aws-s3@main
         with:
-          directory: docs
-          bucket: my-bucket-name
-          bucket_region: us-west-2
+          source: docs
+          destination: my-bucket-name
+          aws_region: us-west-2
         env:
           AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
 ```
 
-Example 2 - Runs `build.sh` script to create and upload `reports` directory. Adds bucket tags.
+Example 2 - Runs `build.sh` script to create and upload `reports` directory. Adds bucket tags. Uses AWS_REGION environment variable instead of aws_region input.
 
 ```yaml
 jobs:
@@ -96,17 +97,34 @@ jobs:
       - name: Deploy directory to AWS S3
         uses: devopspolis/deploy-to-aws-s3@main
         with:
-          directory: reports
-          bucket: my-app-bucket
-          bucket_region: us-west-2
+          source: reports
+          destination: my-app-bucket
           script: build.sh
           tags: version=1.2.3,environment=production
         env:
           AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_REGION: us-west-2
 ```
 
-Example 3 - Runs `build.sh` script located in `scripts` directory with argument `--prod` to create and upload `dist` directory.
+Example 3 - Runs `build.sh` script located in `scripts` directory with argument `--prod` to create and upload `dist` directory. Uses AWS_REGION environment variable.
+
+Example 4 - Uploads a single file to S3 bucket with a prefix path. Uses AWS_REGION environment variable.
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy single file to AWS S3
+        uses: devopspolis/deploy-to-aws-s3@main
+        with:
+          source: build/app.zip
+          destination: my-app-bucket/releases
+        env:
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          AWS_REGION: us-west-2
+```
 
 ```yaml
 jobs:
@@ -117,14 +135,13 @@ jobs:
       - name: Deploy directory to AWS S3
         uses: devopspolis/deploy-to-aws-s3@main
         with:
-          directory: dist
-          bucket: my-app-bucket
-          bucket_region: us-west-2
+          source: dist
+          destination: my-app-bucket
           script: "build.sh --prod"
           working-directory: scripts
         env:
           AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
-          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_REGION: us-west-2
 ```
 ---
 <!-- trunk-ignore(markdownlint/MD033) -->

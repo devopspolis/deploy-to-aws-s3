@@ -6,18 +6,18 @@ branding:
   color: purple
 
 inputs:
-  directory:
-    description: Directory to upload (source)
+  source:
+    description: Directory or file to upload (source)
     type: string
     required: true
-  bucket:
-    description: AWS S3 Bucket name (destination)
+  destination:
+    description: S3 bucket name or bucket/prefix path (destination)
     type: string
     required: true
-  bucket_region:
-    description: AWS S3 Bucket region
+  aws_region:
+    description: AWS region (uses AWS_REGION, AWS_DEFAULT_REGION, or defaults to us-east-1)
     type: string
-    required: true
+    required: false
   delete:
     description: Delete files not in source directory
     type: boolean
@@ -75,7 +75,7 @@ runs:
       with:
         role-to-assume: ${{ steps.resolve-role.outputs.role_arn }}
         role-session-name: GitHubActionDeploySession
-        aws-region: ${{ inputs.bucket_region }}
+        aws-region: ${{ steps.resolve-region.outputs.aws_region }}
 
     - name: Set delete
       run: |
@@ -86,10 +86,21 @@ runs:
         fi
       shell: bash
 
-    - name: Validate input directory
+    - name: Resolve AWS region
+      id: resolve-region
       run: |
-        if [ ! -d "${{ inputs.directory }}" ]; then
-          echo "❌ Directory '${{ inputs.directory }}' does not exist"
+        REGION="${{ inputs.aws_region }}"
+        if [ -z "$REGION" ]; then
+          REGION="${AWS_REGION:-${AWS_DEFAULT_REGION:-us-east-1}}"
+        fi
+        echo "aws_region=$REGION" >> $GITHUB_OUTPUT
+        echo "✅ Using AWS region: $REGION"
+      shell: bash
+
+    - name: Validate input source
+      run: |
+        if [ ! -e "${{ inputs.source }}" ]; then
+          echo "❌ Source '${{ inputs.source }}' does not exist"
           exit 1
         fi
       shell: bash
@@ -108,8 +119,8 @@ runs:
         fi
       working-directory: ${{ inputs.working-directory }}
       env:
-        DIRECTORY: ${{ inputs.working-directory }}
-        BUCKET: ${{ inputs.bucket }}
+        SOURCE: ${{ inputs.source }}
+        DESTINATION: ${{ inputs.destination }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         TAGS: ${{ inputs.tags }}
       shell: bash
@@ -117,14 +128,19 @@ runs:
     - name: Upload to S3
       working-directory: ${{ inputs.working-directory }}
       run: |
-        echo "▶️ Syncing '${{ inputs.directory }}' to 's3://${{ inputs.bucket }}'..."
-        aws s3 sync ${{ inputs.directory }} s3://${{ inputs.bucket }} ${{ env.delete_option }} --region ${{ inputs.bucket_region }}
+        if [ -f "${{ inputs.source }}" ]; then
+          echo "▶️ Uploading file '${{ inputs.source }}' to 's3://${{ inputs.destination }}'..."
+          aws s3 cp "${{ inputs.source }}" "s3://${{ inputs.destination }}" --region ${{ steps.resolve-region.outputs.aws_region }}
+        else
+          echo "▶️ Syncing directory '${{ inputs.source }}' to 's3://${{ inputs.destination }}'..."
+          aws s3 sync "${{ inputs.source }}" "s3://${{ inputs.destination }}" ${{ env.delete_option }} --region ${{ steps.resolve-region.outputs.aws_region }}
+        fi
       shell: bash
 
     - name: Add Bucket Tags
       if: ${{ inputs.tags != '' }}
       run: |
-        bucket_name=$(echo "${{ inputs.bucket }}" | cut -d'/' -f1)
+        bucket_name=$(echo "${{ inputs.destination }}" | cut -d'/' -f1)
         echo "Tagging S3 bucket: $bucket_name"
 
         IFS=',' read -ra PAIRS <<< "${{ inputs.tags }}"
@@ -144,12 +160,17 @@ runs:
     - name: Output bucket ARN
       id: bucket_arn
       run: |
-        echo "bucket_arn=arn:aws:s3:::${{ inputs.bucket }}" >> $GITHUB_OUTPUT
+        bucket_name=$(echo "${{ inputs.destination }}" | cut -d'/' -f1)
+        echo "bucket_arn=arn:aws:s3:::$bucket_name" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Generate integrity hash
       id: hash
       run: |
-        HASH=$(find "${{ inputs.directory }}" -type f -exec md5sum {} + | sort -k 2 | md5sum | awk '{print $1}')
+        if [ -f "${{ inputs.source }}" ]; then
+          HASH=$(md5sum "${{ inputs.source }}" | awk '{print $1}')
+        else
+          HASH=$(find "${{ inputs.source }}" -type f -exec md5sum {} + | sort -k 2 | md5sum | awk '{print $1}')
+        fi
         echo "integrity_hash=$HASH" >> $GITHUB_OUTPUT
       shell: bash
