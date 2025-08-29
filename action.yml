@@ -81,6 +81,7 @@ runs:
       run: |
         destination=(${{ inputs.destination }}" | sed 's#^s3://##')
         echo "destination=${destination}" >> $GITHUB_ENV
+      shell: bash
 
     - name: Set delete
       run: |
