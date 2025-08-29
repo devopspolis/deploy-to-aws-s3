@@ -79,7 +79,7 @@ runs:
 
     - name: Set destination
       run: |
-        destination=(echo "${{ inputs.destination }}" | sed 's#^s3://##')
+        destination=$(echo "${{ inputs.destination }}" | sed 's#^s3://##')
         echo "destination=${destination}" >> $GITHUB_ENV
       shell: bash
 
