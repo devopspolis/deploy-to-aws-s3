@@ -77,6 +77,11 @@ runs:
         role-session-name: GitHubActionDeploySession
         aws-region: ${{ steps.resolve-region.outputs.aws_region }}
 
+    - name: Set destination
+      run: |
+        destination=(${{ inputs.destination }}" | sed 's#^s3://##')
+        echo "destination=${destination}" >> $GITHUB_ENV
+
     - name: Set delete
       run: |
         if [[ "${{ inputs.delete }}" == "true" ]]; then
@@ -120,7 +125,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       env:
         SOURCE: ${{ inputs.source }}
-        DESTINATION: ${{ inputs.destination }}
+        DESTINATION: ${{ env.destination }}
         WORKING_DIRECTORY: ${{ inputs.working-directory }}
         TAGS: ${{ inputs.tags }}
       shell: bash
@@ -129,18 +134,18 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         if [ -f "${{ inputs.source }}" ]; then
-          echo "▶️ Uploading file '${{ inputs.source }}' to 's3://${{ inputs.destination }}'..."
-          aws s3 cp "${{ inputs.source }}" "s3://${{ inputs.destination }}" --region ${{ steps.resolve-region.outputs.aws_region }}
+          echo "▶️ Uploading file '${{ inputs.source }}' to 's3://${{ env.destination }}'..."
+          aws s3 cp "${{ inputs.source }}" "s3://${{ env.destination }}" --region ${{ steps.resolve-region.outputs.aws_region }}
         else
-          echo "▶️ Syncing directory '${{ inputs.source }}' to 's3://${{ inputs.destination }}'..."
-          aws s3 sync "${{ inputs.source }}" "s3://${{ inputs.destination }}" ${{ env.delete_option }} --region ${{ steps.resolve-region.outputs.aws_region }}
+          echo "▶️ Syncing directory '${{ inputs.source }}' to 's3://${{ env.destination }}'..."
+          aws s3 sync "${{ inputs.source }}" "s3://${{ env.destination }}" ${{ env.delete_option }} --region ${{ steps.resolve-region.outputs.aws_region }}
         fi
       shell: bash
 
     - name: Add Bucket Tags
       if: ${{ inputs.tags != '' }}
       run: |
-        bucket_name=$(echo "${{ inputs.destination }}" | cut -d'/' -f1)
+        bucket_name=$(echo "${{ env.destination }}" | cut -d'/' -f1)
         echo "Tagging S3 bucket: $bucket_name"
 
         IFS=',' read -ra PAIRS <<< "${{ inputs.tags }}"
@@ -160,7 +165,7 @@ runs:
     - name: Output bucket ARN
       id: bucket_arn
       run: |
-        bucket_name=$(echo "${{ inputs.destination }}" | cut -d'/' -f1)
+        bucket_name=$(echo "${{ env.destination }}" | cut -d'/' -f1)
         echo "bucket_arn=arn:aws:s3:::$bucket_name" >> $GITHUB_OUTPUT
       shell: bash
 
