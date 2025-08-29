@@ -1,0 +1,5 @@
+# Exclude GitHub workflows from release archives
+.github/ export-ignore
+
+# Exclude development files from release archives
+CLAUDE.md export-ignore
