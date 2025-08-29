@@ -77,7 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy directory to AWS S3
-        uses: devopspolis/deploy-to-aws-s3@main
+        uses: devopspolis/deploy-to-aws-s3@v1
         with:
           source: docs
           destination: my-bucket-name
@@ -95,7 +95,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy directory to AWS S3
-        uses: devopspolis/deploy-to-aws-s3@main
+        uses: devopspolis/deploy-to-aws-s3@v1
         with:
           source: reports
           destination: my-app-bucket
@@ -117,7 +117,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy single file to AWS S3
-        uses: devopspolis/deploy-to-aws-s3@main
+        uses: devopspolis/deploy-to-aws-s3@v1
         with:
           source: build/app.zip
           destination: my-app-bucket/releases
@@ -133,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Deploy directory to AWS S3
-        uses: devopspolis/deploy-to-aws-s3@main
+        uses: devopspolis/deploy-to-aws-s3@v1
         with:
           source: dist
           destination: my-app-bucket
